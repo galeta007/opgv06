@@ -15,8 +15,8 @@ if (!$data) {
     exit;
 }
 
-$url = "https://api.egitopay.com/v1/transactions";
-$secret = "sk_19b07ce157b857b22710b20db7deef3d1f30c5e2";
+$url = "https://api.blackcatoficial.com/api";
+$secret = "sk_live_73c2843462646ec166e3ad9edd0e94ba6709c727fbf21c989b938648697dcd3b";
 
 $ch = curl_init();
 curl_setopt($ch, CURLOPT_URL, $url);
@@ -33,7 +33,6 @@ $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 curl_close($ch);
 
 if ($httpcode >= 200 && $httpcode < 300) {
-    $pushcut_url = "https://api.pushcut.io/U0n2kN2R4cEzMDRSt1v-s/notifications/Venda%20Gui%20";
     $push_ch = curl_init();
     curl_setopt($push_ch, CURLOPT_URL, $pushcut_url);
     curl_setopt($push_ch, CURLOPT_POST, 1);
