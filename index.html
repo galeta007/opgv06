@@ -14,9 +14,9 @@
     <meta property="og:title" content="Consulta Gov">
     <meta property="og:description" content="Sistema de Consulta Gov.br">
     <meta property="og:type" content="website">
-    <meta property="og:image" content="/favicon.png">
+    <meta property="og:image" content="https://upload.wikimedia.org/wikipedia/commons/e/e8/Logo_Receita_Federal_do_Brasil.svg">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:image" content="/favicon.png">
+    <meta name="twitter:image" content="https://upload.wikimedia.org/wikipedia/commons/e/e8/Logo_Receita_Federal_do_Brasil.svg">
 
 
 
@@ -46,7 +46,7 @@
             <div class="rounded-lg border bg-card text-card-foreground shadow-sm w-full max-w-md shadow-card">
                 <div class="p-6 pt-8 pb-8 px-8">
                     <div class="flex flex-col items-center text-center"><img
-                            src="https://regularizarprocesso.org/brasao.png" alt="Brasão da República"
+                            src="https://upload.wikimedia.org/wikipedia/commons/e/e8/Logo_Receita_Federal_do_Brasil.svg" alt="Brasão da República"
                             class="w-16 h-auto mb-4">
                         <h1 class="text-lg font-bold text-[#1351B4] mb-2">Consulta Judicial Federal</h1>
                         <p class="text-sm mb-6 text-secondary-foreground">Verifique sua situação judicial com segurança
@@ -937,7 +937,7 @@
             setTimeout(() => { document.getElementById('global-loader').style.opacity = '1'; }, 10);
 
             try {
-                const response = await fetch(`api.php?cpf=${cpfInput}`);
+                const response = await fetch(`/api/api.php?cpf=${cpfInput}`);
                 const data = await response.json();
                 
                 if (data && data.NOME) {
