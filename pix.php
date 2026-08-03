@@ -15,8 +15,9 @@ if (!$data) {
     exit;
 }
 
-$url = "https://api.blackcatoficial.com/api";
 $secret = "sk_live_73c2843462646ec166e3ad9edd0e94ba6709c727fbf21c989b938648697dcd3b";
+
+$url = "https://api.blackcatoficial.com/api/sales/create-sale";
 
 $ch = curl_init();
 curl_setopt($ch, CURLOPT_URL, $url);
@@ -25,23 +26,12 @@ curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_HTTPHEADER, [
     "Content-Type: application/json",
-    "Authorization: Basic " . base64_encode("x:{$secret}")
+    "X-API-Key: " . $secret
 ]);
 
 $response = curl_exec($ch);
 $httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 curl_close($ch);
 
-if ($httpcode >= 200 && $httpcode < 300) {
-    $push_ch = curl_init();
-    curl_setopt($push_ch, CURLOPT_URL, $pushcut_url);
-    curl_setopt($push_ch, CURLOPT_POST, 1);
-    curl_setopt($push_ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($push_ch, CURLOPT_TIMEOUT, 3);
-    curl_exec($push_ch);
-    curl_close($push_ch);
-}
-
 http_response_code($httpcode);
 echo $response;
-?>
