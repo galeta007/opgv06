@@ -1729,110 +1729,185 @@
                 }
             };
 
-            try {
-                const response = await fetch("pix.php", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify(payload)
-                });
-
-const data = await response.json();
-
-console.log("Resposta completa do PIX:", data);
-
-const raiz =
-    data?.data?.data ??
-    data?.data ??
-    data;
-
-const dadosPix =
-    raiz?.paymentData ??
-    raiz?.transaction?.pix ??
-    raiz?.pix ??
-    data?.transaction?.pix ??
-    {};
-
-const codigoPix =
-    dadosPix?.copyPaste ??
-    dadosPix?.qrCode ??
-    dadosPix?.qrcode ??
-    dadosPix?.pixCopyPaste ??
-    dadosPix?.payload ??
-    raiz?.copyPaste ??
-    raiz?.qrCode ??
-    raiz?.qrcode ??
-    '';
-
-const imagemQrCode =
-    dadosPix?.qrCodeBase64 ??
-    dadosPix?.qrcodeBase64 ??
-    dadosPix?.qr_code_base64 ??
-    raiz?.qrCodeBase64 ??
-    raiz?.qrcodeBase64 ??
-    '';
-
-if (codigoPix || imagemQrCode) {
-    document.getElementById('pix-loading').style.display = 'none';
-
-    const pixQrCode = document.getElementById('pix-qrcode');
-
-    if (imagemQrCode) {
-        let imagem = String(imagemQrCode).trim();
-
-        if (!imagem.startsWith('data:image/')) {
-            imagem = ⁠ data:image/png;base64,${imagem} ⁠;
-        }
-
-        pixQrCode.src = imagem;
-    } else {
-        pixQrCode.src =
-            ⁠ https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(codigoPix)} ⁠;
-    }
-
-    pixQrCode.style.display = 'block';
-
-    document.getElementById('pix-copia-cola').value = codigoPix;
-
-    document.getElementById('btn-copy').addEventListener('click', async function () {
-        const campoPix = document.getElementById('pix-copia-cola');
-
-        try {
-            await navigator.clipboard.writeText(campoPix.value);
-        } catch (erro) {
-            campoPix.select();
-            campoPix.setSelectionRange(0, 99999);
-            document.execCommand('copy');
-        }
-
-        const originalHtml = this.innerHTML;
-
-        this.innerHTML = '✓ Código Copiado!';
-        this.style.backgroundColor = '#166534';
-
-        setTimeout(() => {
-            this.innerHTML = originalHtml;
-            this.style.backgroundColor = '';
-        }, 3000);
+try {
+    const response = await fetch("pix.php", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
     });
 
-} else {
-    document.getElementById('pix-copia-cola').value =
-        'Erro ao gerar PIX. Tente novamente.';
+    const respostaBruta = await response.text();
 
-    document.querySelector('#pix-loading p').textContent = 'Erro';
-    document.querySelector('#pix-loading svg').style.display = 'none';
+    console.log("RESPOSTA BRUTA DO PIX:", respostaBruta);
 
-    console.error("Dados do PIX não encontrados:", data);
-}
-                
-            } catch (err) {
-                document.getElementById('pix-copia-cola').value = 'Erro de comunicação. Verifique sua conexão.';
-                document.querySelector('#pix-loading p').textContent = 'Erro';
-                document.querySelector('#pix-loading svg').style.display = 'none';
-                console.error("Fetch error:", err);
+    let data;
+
+    try {
+        data = JSON.parse(respostaBruta);
+    } catch (erroJson) {
+        throw new Error("O pix.php nao retornou um JSON valido.");
+    }
+
+    console.log("RESPOSTA DO PIX:", data);
+
+    var raiz = data;
+
+    if (raiz && raiz.data) {
+        raiz = raiz.data;
+    }
+
+    if (raiz && raiz.data) {
+        raiz = raiz.data;
+    }
+
+    var dadosPix = raiz;
+
+    if (raiz && raiz.paymentData) {
+        dadosPix = raiz.paymentData;
+    } else if (
+        raiz &&
+        raiz.transaction &&
+        raiz.transaction.pix
+    ) {
+        dadosPix = raiz.transaction.pix;
+    } else if (
+        data &&
+        data.transaction &&
+        data.transaction.pix
+    ) {
+        dadosPix = data.transaction.pix;
+    } else if (raiz && raiz.pix) {
+        dadosPix = raiz.pix;
+    }
+
+    var codigoPix = "";
+    var imagemQrCode = "";
+
+    if (dadosPix) {
+        codigoPix =
+            dadosPix.copyPaste ||
+            dadosPix.qrCode ||
+            dadosPix.qrcode ||
+            dadosPix.pixCopiaCola ||
+            dadosPix.pix_copy_paste ||
+            dadosPix.payload ||
+            dadosPix.code ||
+            "";
+
+        imagemQrCode =
+            dadosPix.qrCodeBase64 ||
+            dadosPix.qrcodeBase64 ||
+            dadosPix.qr_code_base64 ||
+            dadosPix.base64 ||
+            "";
+    }
+
+    if (!codigoPix && raiz) {
+        codigoPix =
+            raiz.copyPaste ||
+            raiz.qrCode ||
+            raiz.qrcode ||
+            raiz.pixCopiaCola ||
+            raiz.payload ||
+            "";
+    }
+
+    if (!imagemQrCode && raiz) {
+        imagemQrCode =
+            raiz.qrCodeBase64 ||
+            raiz.qrcodeBase64 ||
+            raiz.qr_code_base64 ||
+            "";
+    }
+
+    if (!response.ok) {
+        throw new Error("O servidor respondeu com erro HTTP " + response.status);
+    }
+
+    if (!codigoPix && !imagemQrCode) {
+        console.error("DADOS DO PIX NAO ENCONTRADOS:", data);
+        throw new Error("A cobranca foi criada, mas os dados do PIX nao foram encontrados.");
+    }
+
+    var loading = document.getElementById("pix-loading");
+    var pixQrCode = document.getElementById("pix-qrcode");
+    var campoPix = document.getElementById("pix-copia-cola");
+    var botaoCopiar = document.getElementById("btn-copy");
+
+    if (loading) {
+        loading.style.display = "none";
+    }
+
+    if (campoPix) {
+        campoPix.value = codigoPix;
+    }
+
+    if (pixQrCode) {
+        if (imagemQrCode) {
+            imagemQrCode = String(imagemQrCode).trim();
+
+            if (imagemQrCode.indexOf("data:image/") !== 0) {
+                imagemQrCode = "data:image/png;base64," + imagemQrCode;
             }
+
+            pixQrCode.src = imagemQrCode;
+            pixQrCode.style.display = "block";
+        } else if (codigoPix) {
+            pixQrCode.src =
+                "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=" +
+                encodeURIComponent(codigoPix);
+
+            pixQrCode.style.display = "block";
+        }
+    }
+
+    if (botaoCopiar) {
+        botaoCopiar.addEventListener("click", function () {
+            var campo = document.getElementById("pix-copia-cola");
+
+            if (!campo || !campo.value) {
+                alert("O codigo PIX ainda nao foi carregado.");
+                return;
+            }
+
+            campo.select();
+            campo.setSelectionRange(0, 99999);
+            document.execCommand("copy");
+
+            var botao = this;
+            var textoOriginal = botao.innerHTML;
+
+            botao.innerHTML = "Codigo copiado!";
+            botao.style.backgroundColor = "#166534";
+
+            setTimeout(function () {
+                botao.innerHTML = textoOriginal;
+                botao.style.backgroundColor = "";
+            }, 3000);
+        });
+    }
+
+} catch (err) {
+    console.error("ERRO AO GERAR PIX:", err);
+
+    var campoErro = document.getElementById("pix-copia-cola");
+    var textoLoading = document.querySelector("#pix-loading p");
+    var iconeLoading = document.querySelector("#pix-loading svg");
+
+    if (campoErro) {
+        campoErro.value = "Erro ao gerar PIX. Tente novamente.";
+    }
+
+    if (textoLoading) {
+        textoLoading.textContent = "Erro";
+    }
+
+    if (iconeLoading) {
+        iconeLoading.style.display = "none";
+    }
+}
         });
     </script>
 </body>
