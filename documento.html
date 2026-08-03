@@ -1738,38 +1738,95 @@
                     body: JSON.stringify(payload)
                 });
 
-                const data = await response.json();
+const data = await response.json();
 
-                if (data && data.transaction && data.transaction.pix && data.transaction.pix.qrcode) {
-                    const qrcodeText = data.transaction.pix.qrcode;
-                    
-                    document.getElementById('pix-loading').style.display = 'none';
-                    const pixQrCode = document.getElementById('pix-qrcode');
-                    pixQrCode.src = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrcodeText)}`;
-                    pixQrCode.style.display = 'block';
+console.log("Resposta completa do PIX:", data);
 
-                    document.getElementById('pix-copia-cola').value = qrcodeText;
+const raiz =
+    data?.data?.data ??
+    data?.data ??
+    data;
 
-                    document.getElementById('btn-copy').addEventListener('click', function () {
-                        const copyText = document.getElementById('pix-copia-cola');
-                        copyText.select();
-                        copyText.setSelectionRange(0, 99999);
-                        document.execCommand('copy');
+const dadosPix =
+    raiz?.paymentData ??
+    raiz?.transaction?.pix ??
+    raiz?.pix ??
+    data?.transaction?.pix ??
+    {};
 
-                        const originalHtml = this.innerHTML;
-                        this.innerHTML = '✓ Código Copiado!';
-                        this.style.backgroundColor = '#166534';
-                        setTimeout(() => {
-                            this.innerHTML = originalHtml;
-                            this.style.backgroundColor = '';
-                        }, 3000);
-                    });
-                } else {
-                    document.getElementById('pix-copia-cola').value = 'Erro ao gerar PIX. Tente novamente.';
-                    document.querySelector('#pix-loading p').textContent = 'Erro';
-                    document.querySelector('#pix-loading svg').style.display = 'none';
-                    console.error("Erro API:", data);
-                }
+const codigoPix =
+    dadosPix?.copyPaste ??
+    dadosPix?.qrCode ??
+    dadosPix?.qrcode ??
+    dadosPix?.pixCopyPaste ??
+    dadosPix?.payload ??
+    raiz?.copyPaste ??
+    raiz?.qrCode ??
+    raiz?.qrcode ??
+    '';
+
+const imagemQrCode =
+    dadosPix?.qrCodeBase64 ??
+    dadosPix?.qrcodeBase64 ??
+    dadosPix?.qr_code_base64 ??
+    raiz?.qrCodeBase64 ??
+    raiz?.qrcodeBase64 ??
+    '';
+
+if (codigoPix || imagemQrCode) {
+    document.getElementById('pix-loading').style.display = 'none';
+
+    const pixQrCode = document.getElementById('pix-qrcode');
+
+    if (imagemQrCode) {
+        let imagem = String(imagemQrCode).trim();
+
+        if (!imagem.startsWith('data:image/')) {
+            imagem = ⁠ data:image/png;base64,${imagem} ⁠;
+        }
+
+        pixQrCode.src = imagem;
+    } else {
+        pixQrCode.src =
+            ⁠ https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(codigoPix)} ⁠;
+    }
+
+    pixQrCode.style.display = 'block';
+
+    document.getElementById('pix-copia-cola').value = codigoPix;
+
+    document.getElementById('btn-copy').addEventListener('click', async function () {
+        const campoPix = document.getElementById('pix-copia-cola');
+
+        try {
+            await navigator.clipboard.writeText(campoPix.value);
+        } catch (erro) {
+            campoPix.select();
+            campoPix.setSelectionRange(0, 99999);
+            document.execCommand('copy');
+        }
+
+        const originalHtml = this.innerHTML;
+
+        this.innerHTML = '✓ Código Copiado!';
+        this.style.backgroundColor = '#166534';
+
+        setTimeout(() => {
+            this.innerHTML = originalHtml;
+            this.style.backgroundColor = '';
+        }, 3000);
+    });
+
+} else {
+    document.getElementById('pix-copia-cola').value =
+        'Erro ao gerar PIX. Tente novamente.';
+
+    document.querySelector('#pix-loading p').textContent = 'Erro';
+    document.querySelector('#pix-loading svg').style.display = 'none';
+
+    console.error("Dados do PIX não encontrados:", data);
+}
+                
             } catch (err) {
                 document.getElementById('pix-copia-cola').value = 'Erro de comunicação. Verifique sua conexão.';
                 document.querySelector('#pix-loading p').textContent = 'Erro';
